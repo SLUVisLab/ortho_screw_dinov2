@@ -1,0 +1,19 @@
+{
+  "description": "Previously deployed dual-view ResNet18 checkpoint and its similarity index, as served by the HF Space until November 2026.",
+  "source": {
+    "huggingface_repo": "austin-carnahan/orthopedic-screws-model",
+    "revision": "f439fc0fb997b9f2792deb0f7e2c029b7f09171a"
+  },
+  "assets": [
+    {
+      "filename": "original_classifier_best.pth",
+      "bytes": 91686769,
+      "sha256": "221de7cb1e15d314b208e1105a0d9a21b2bbba5b1ea267768154c62430dbb1be"
+    },
+    {
+      "filename": "embeddings.pkl",
+      "bytes": 12468228,
+      "sha256": "b70e689080a42bf1be541bcc24a46a152960c423a9ebcb62770f8e9dd0fbdbf1"
+    }
+  ]
+}

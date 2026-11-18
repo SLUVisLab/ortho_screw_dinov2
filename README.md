@@ -1,8 +1,32 @@
 # Orthopedic screw classification with dual-view DINOv2
 
-This repository hands over a trained **dual-view DINOv2 manufacturer classifier** and code to train, evaluate, and use it. It takes an AP screw crop and a lateral screw crop from the same patient. Austin manages the separate data handoff; no images, masks, metadata rows, patient identifiers, or retrieval index are included here.
+This repository hands over a trained **dual-view DINOv2 manufacturer classifier** and code to train, evaluate, and use it. It takes an AP screw crop and a lateral screw crop from the same patient. The images, masks, and labels are published separately as the Hugging Face dataset [`austin-carnahan/orthopedic-screw-images`](https://huggingface.co/datasets/austin-carnahan/orthopedic-screw-images) (see [Data](#data)); no images, masks, metadata rows, or patient identifiers are committed here.
 
-The supplied checkpoint achieved **59.58% crop-pair accuracy (143/240)** in a fresh evaluation on November 18, 2026. This is a diagnostic on the reconstructed evaluation split, not an independent final test. See [the evaluation report](reports/checkpoint_evaluation.json).
+This model is the one served by the [OrthoScrew ID Hugging Face Space](https://huggingface.co/spaces/austin-carnahan/orthopedic-screw-identification), which backs the [OrthoScrew ID web app](https://github.com/SLUVisLab/iris-orthopedic). Deployment code (Space, similarity index, deploy scripts) lives in that repository's `ml/` folder.
+
+## Results
+
+The supplied checkpoint achieves **59.6% crop-pair accuracy (143/240)**, **46.9% balanced accuracy**, and **46.3% macro-F1** on the 26-patient evaluation split. This is a diagnostic on the reconstructed checkpoint-selection split, not an independent final test. See [the evaluation report](reports/checkpoint_evaluation.json).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="reports/checkpoint_evaluation_dark.svg">
+  <img alt="Per-class accuracy, precision, and F1 bars and a row-normalized confusion matrix for the dual-view DINOv2 model on the evaluation split." src="reports/checkpoint_evaluation.svg">
+</picture>
+
+| Manufacturer | Eval pairs | Per-class accuracy (recall) | Precision | F1 |
+| --- | ---: | ---: | ---: | ---: |
+| DePuy Expedium (Synthes) | 40 | 45.0% | 31.0% | 36.7% |
+| Medtronic Solera | 110 | 89.1% | 83.1% | 86.0% |
+| NuVasive Reline | 60 | 36.7% | 48.9% | 41.9% |
+| SeaSpine Mariner | 30 | 16.7% | 26.3% | 20.4% |
+| **Macro average** | 240 | **46.9%** | **47.3%** | **46.3%** |
+
+How to read this:
+
+- Overall accuracy is driven by Medtronic, which is 110 of the 240 evaluation pairs. Balanced accuracy and macro-F1 weight every manufacturer equally and are the better summary.
+- SeaSpine is the weakest class: half of its pairs are predicted as DePuy, and its recall is below chance (25%).
+- Every class rests on few patients (roughly 3 to 11 evaluation patients each), and the 10 pairs per patient are correlated, so per-class numbers can move by tens of points with a different split.
+- For context, the previously deployed dual-view ResNet18, scored on the same 240 crop pairs, reached 49.6% accuracy, 48.4% balanced accuracy, and 49.4% macro-F1. DINOv2 is ahead on overall accuracy; on the class-balanced metrics the two are within a few points, with ResNet18 slightly ahead. They fail differently: ResNet18 never predicted NuVasive and labelled about half of all pairs SeaSpine, while DINOv2 predicts every class. See [`legacy/resnet18/`](legacy/resnet18/).
 
 ## Get the code and weights
 
@@ -21,6 +45,14 @@ python verify_weights.py
 
 Access to this private repository is required. Alternatively, download the two weight files from the [release page](https://github.com/SLUVisLab/ortho_screw_dinov2/releases/tag/handoff-v1) and place them in `weights/`.
 
+The same two files are also published in the Hugging Face model repository [`austin-carnahan/orthopedic-screws-model`](https://huggingface.co/austin-carnahan/orthopedic-screws-model), which needs no GitHub access:
+
+```bash
+hf download austin-carnahan/orthopedic-screws-model \
+  dinov2_dual_view.pth dinov2_vits14_pretrain.pth --local-dir weights
+python verify_weights.py
+```
+
 The release contains:
 
 | File | Purpose |
@@ -32,9 +64,29 @@ Checksums and file sizes are in [weights_manifest.json](weights_manifest.json). 
 
 Verification used Python 3.10.17, PyTorch 2.9.1, torchvision 0.24.1, and Apple MPS. For a CUDA server, install the corresponding CUDA-enabled PyTorch build. `--device auto` selects CUDA, then MPS, then CPU. Missing optional xFormers warnings are harmless for this workflow.
 
-## Data expected from the handoff
+## Data
 
-Pass the directory containing `metadata_summary.csv` as `--data-dir`. The CSV must contain:
+### Download from Hugging Face (recommended)
+
+The dataset is public at [`austin-carnahan/orthopedic-screw-images`](https://huggingface.co/datasets/austin-carnahan/orthopedic-screw-images) (about 630 MB). The `hf` command comes with `huggingface_hub`, which is in `requirements.txt`:
+
+```bash
+hf download austin-carnahan/orthopedic-screw-images --repo-type dataset \
+  --revision d2af488859875b46bf5abf88f905b26069813597 --local-dir data/hf
+```
+
+Then pass the dataset's `data/` folder (the one containing `metadata_summary.csv`) to every script:
+
+```bash
+python evaluate.py --data-dir data/hf/data ...
+python train.py --data-dir data/hf/data ...
+```
+
+`data/` is gitignored. The `--revision` pins the exact snapshot the reported results were produced from; drop it to get the latest version. The dataset also contains `metadata.csv` (Hugging Face image-folder format), per-patient `binary_masks/`, and de-identified DICOM header `.json` files, which these scripts do not use.
+
+### Use a local copy
+
+Any local directory with the same layout works; pass the directory containing `metadata_summary.csv` as `--data-dir`. The CSV must contain:
 
 | Column | Meaning |
 | --- | --- |
@@ -47,10 +99,12 @@ Images are arranged under `manufacturer/patient/images/`. Their masks are under 
 
 The loader samples AP and lateral images from the same patient, finds screw mask contours larger than 100 pixels in area, and independently selects one screw in each view. It extracts a context crop twice the largest bounding-box dimension, with a small center jitter and replicated border padding. It does not establish anatomical correspondence between individual screws across views. Patients without a valid pair are skipped and counted in evaluation.
 
+The `metadata_sha256` recorded in the original handoff verification differs from the Hugging Face copy of `metadata_summary.csv`, but evaluating on the Hugging Face copy reproduces the same split, the same 240 valid pairs, and the identical confusion matrix. [The current report](reports/checkpoint_evaluation.json) records the Hugging Face file's hash.
+
 ## Evaluate the supplied model
 
 ```bash
-python evaluate.py --data-dir /absolute/path/to/transferred_data \
+python evaluate.py --data-dir data/hf/data \
   --checkpoint weights/dinov2_dual_view.pth \
   --device auto --seed 42 --workers 4 --batch-size 32 \
   --output runs/checkpoint_evaluation.json
@@ -58,12 +112,20 @@ python evaluate.py --data-dir /absolute/path/to/transferred_data \
 
 This reproduces the reported protocol: a patient-disjoint 80/20 split with `random_state=42`, 10 sampled pairs per evaluation patient, and the supplied checkpoint. The data used for verification had 104 training patients and 26 evaluation patients. Of 260 nominal evaluation pairs, 240 were valid and 20 were skipped.
 
-The JSON includes overall accuracy, balanced accuracy, per-class recall and support, the confusion matrix, skipped counts, sampling settings, and SHA256 hashes of the model and metadata. Crop sampling is stochastic; keep the seed, worker count, software versions, metadata ordering, and files fixed for repeatability. Hardware differences can also change numerical results.
+The JSON includes overall accuracy, balanced accuracy, macro precision and macro-F1, per-class recall (per-class accuracy), precision, F1, and support, the confusion matrix, skipped counts, sampling settings, and SHA256 hashes of the model and metadata. Crop sampling is stochastic; keep the seed, worker count, software versions, metadata ordering, and files fixed for repeatability. Hardware differences can also change numerical results.
+
+To plot a report (per-class accuracy, precision, and F1 bars plus a row-normalized confusion matrix), run:
+
+```bash
+python plot_evaluation.py runs/checkpoint_evaluation.json
+```
+
+This writes `runs/checkpoint_evaluation.svg` and a dark-theme `runs/checkpoint_evaluation_dark.svg`; `--output` picks another path or a `.png`. Precision and F1 are recomputed from the confusion matrix, so reports from the earlier evaluator also work. The figure in [Results](#results) was made this way from [the committed report](reports/checkpoint_evaluation.json).
 
 For a newly trained checkpoint, use its saved patient split:
 
 ```bash
-python evaluate.py --data-dir /absolute/path/to/transferred_data \
+python evaluate.py --data-dir data/hf/data \
   --checkpoint runs/new_training/best_dual_view.pth \
   --split-config runs/new_training/run_config.json \
   --output runs/new_training/reevaluation.json
@@ -74,12 +136,12 @@ The evaluator verifies that the split configuration belongs to the checkpoint. T
 ## Train a new model
 
 ```bash
-python train.py --data-dir /absolute/path/to/transferred_data \
+python train.py --data-dir data/hf/data \
   --output-dir runs/new_training \
   --epochs 50 --batch-size 16 --workers 2 --device auto
 ```
 
-The output directory must not exist. Training starts a new classifier head over the frozen pretrained backbone; it does not resume the supplied classifier. The recipe recovered from the original local source is:
+The output directory must not exist. The backbone is frozen and only the small classifier head is trained, so memory use is modest; `--batch-size` is the setting to lower if a GPU runs out of memory, and `--epochs` shortens a run. Training starts a new classifier head over the frozen pretrained backbone; it does not resume the supplied classifier. The recipe recovered from the original local source is:
 
 | Setting | Value |
 | --- | --- |
@@ -127,6 +189,10 @@ Inputs should be screw-centered context crops, approximately twice the screw's l
 python -m unittest discover -s tests -v
 ```
 
-The handoff checks cover strict checkpoint loading, real-pair inference, head optimization with a frozen backbone, save/load equivalence, invalid-weight rejection, empty batches, and data split validation. Aggregate verification results are in `reports/`; no sample images or patient-level records are committed.
+The unit tests need no data or weights. They cover rejection of non-dual-view checkpoints, all-invalid batches, the metric calculations (accuracy, balanced accuracy, precision, F1, and a never-predicted class), and rejection of overlapping saved splits.
 
-Core files: `model.py` defines the model; `dataset.py` makes paired crops; `train.py`, `evaluate.py`, and `predict.py` are the executable entry points. [THIRD_PARTY.md](THIRD_PARTY.md) documents the vendored DINOv2 source.
+Broader checks were run once for the original handoff and are summarized in [`reports/verification.json`](reports/verification.json): strict loading and evaluation of the released checkpoint on real data, a one-epoch training run, reloading a trained checkpoint with its saved split, and confirming the backbone is unchanged after training. They are not automated tests. To repeat the most important one, download the data and weights and run the evaluation command above; it should report 143 of 240 pairs correct.
+
+No sample images or patient-level records are committed.
+
+Core files: `model.py` defines the model; `dataset.py` makes paired crops; `train.py`, `evaluate.py`, `plot_evaluation.py`, and `predict.py` are the executable entry points. [`legacy/resnet18/`](legacy/resnet18/) archives the previously deployed ResNet18 model for comparison. [THIRD_PARTY.md](THIRD_PARTY.md) documents the vendored DINOv2 source.

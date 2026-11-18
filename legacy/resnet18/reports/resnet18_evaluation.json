@@ -1,0 +1,179 @@
+{
+  "model": "dual-view ResNet18 (legacy)",
+  "results_by_preprocessing": {
+    "training": {
+      "valid_pairs": 240,
+      "correct_pairs": 119,
+      "accuracy_percent": 49.583333333333336,
+      "balanced_accuracy_percent": 48.40909090909091,
+      "macro_precision_percent": 68.81127450980392,
+      "macro_f1_percent": 49.37289611520517,
+      "class_order": [
+        "Depuy expedium (Synthes)",
+        "medtronic solera",
+        "nuvasive reline",
+        "seaspine mariner"
+      ],
+      "per_class": [
+        {
+          "manufacturer": "Depuy expedium (Synthes)",
+          "pairs": 40,
+          "correct": 8,
+          "predicted": 8,
+          "recall_percent": 20.0,
+          "precision_percent": 100.0,
+          "f1_percent": 33.333333333333336
+        },
+        {
+          "manufacturer": "medtronic solera",
+          "pairs": 110,
+          "correct": 81,
+          "predicted": 96,
+          "recall_percent": 73.63636363636363,
+          "precision_percent": 84.375,
+          "f1_percent": 78.64077669902913
+        },
+        {
+          "manufacturer": "nuvasive reline",
+          "pairs": 60,
+          "correct": 0,
+          "predicted": 0,
+          "recall_percent": 0.0,
+          "precision_percent": null,
+          "f1_percent": null
+        },
+        {
+          "manufacturer": "seaspine mariner",
+          "pairs": 30,
+          "correct": 30,
+          "predicted": 136,
+          "recall_percent": 100.0,
+          "precision_percent": 22.058823529411764,
+          "f1_percent": 36.14457831325301
+        }
+      ],
+      "confusion_matrix_true_rows_predicted_columns": [
+        [
+          8,
+          11,
+          0,
+          21
+        ],
+        [
+          0,
+          81,
+          0,
+          29
+        ],
+        [
+          0,
+          4,
+          0,
+          56
+        ],
+        [
+          0,
+          0,
+          0,
+          30
+        ]
+      ],
+      "evaluation_patients": 26,
+      "nominal_pairs": 260,
+      "skipped_pairs": 20
+    },
+    "space": {
+      "valid_pairs": 240,
+      "correct_pairs": 124,
+      "accuracy_percent": 51.666666666666664,
+      "balanced_accuracy_percent": 48.14393939393939,
+      "macro_precision_percent": 56.35265700483092,
+      "macro_f1_percent": 47.775644808912915,
+      "class_order": [
+        "Depuy expedium (Synthes)",
+        "medtronic solera",
+        "nuvasive reline",
+        "seaspine mariner"
+      ],
+      "per_class": [
+        {
+          "manufacturer": "Depuy expedium (Synthes)",
+          "pairs": 40,
+          "correct": 6,
+          "predicted": 9,
+          "recall_percent": 15.0,
+          "precision_percent": 66.66666666666666,
+          "f1_percent": 24.489795918367346
+        },
+        {
+          "manufacturer": "medtronic solera",
+          "pairs": 110,
+          "correct": 89,
+          "predicted": 115,
+          "recall_percent": 80.9090909090909,
+          "precision_percent": 77.39130434782608,
+          "f1_percent": 79.11111111111111
+        },
+        {
+          "manufacturer": "nuvasive reline",
+          "pairs": 60,
+          "correct": 0,
+          "predicted": 0,
+          "recall_percent": 0.0,
+          "precision_percent": null,
+          "f1_percent": null
+        },
+        {
+          "manufacturer": "seaspine mariner",
+          "pairs": 30,
+          "correct": 29,
+          "predicted": 116,
+          "recall_percent": 96.66666666666667,
+          "precision_percent": 25.0,
+          "f1_percent": 39.726027397260275
+        }
+      ],
+      "confusion_matrix_true_rows_predicted_columns": [
+        [
+          6,
+          14,
+          0,
+          20
+        ],
+        [
+          3,
+          89,
+          0,
+          18
+        ],
+        [
+          0,
+          11,
+          0,
+          49
+        ],
+        [
+          0,
+          1,
+          0,
+          29
+        ]
+      ],
+      "evaluation_patients": 26,
+      "nominal_pairs": 260,
+      "skipped_pairs": 20
+    }
+  },
+  "seed": 42,
+  "workers": 4,
+  "batch_size": 32,
+  "device": "mps",
+  "samples_per_patient": 10,
+  "split_mode": "historical",
+  "checkpoint_sha256": "221de7cb1e15d314b208e1105a0d9a21b2bbba5b1ea267768154c62430dbb1be",
+  "metadata_sha256": "45719780dcb7c8541a6715260fecb195830721b6dfd85b6c6d5c66ebc52df319",
+  "torch_version": "2.9.1",
+  "metric_description": "Crop-pair metrics on the same reconstructed selection split and sampled crops as the DINOv2 report.",
+  "evaluated_on": "2026-11-18",
+  "data_source": "Hugging Face dataset austin-carnahan/orthopedic-screw-images, revision d2af488859875b46bf5abf88f905b26069813597 (data/ folder)"
+}
