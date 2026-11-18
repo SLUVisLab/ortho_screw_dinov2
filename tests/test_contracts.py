@@ -30,6 +30,25 @@ class Contracts(unittest.TestCase):
         self.assertAlmostEqual(metrics['accuracy_percent'], 59.58333333, places=5)
         self.assertAlmostEqual(metrics['balanced_accuracy_percent'], 46.85606061, places=5)
 
+    def test_precision_and_f1_from_confusion(self):
+        matrix = torch.tensor([[18, 6, 14, 2], [10, 98, 2, 0], [15, 11, 22, 12], [15, 3, 7, 5]])
+        metrics = summarize(matrix)
+        depuy = metrics['per_class'][0]
+        # Depuy: 18 correct out of 58 predicted (column sum) and 40 true (row sum)
+        self.assertEqual(depuy['predicted'], 58)
+        self.assertAlmostEqual(depuy['precision_percent'], 100 * 18 / 58, places=6)
+        p, r = 18 / 58, 18 / 40
+        self.assertAlmostEqual(depuy['f1_percent'], 100 * 2 * p * r / (p + r), places=6)
+        f1s = [c['f1_percent'] for c in metrics['per_class']]
+        self.assertAlmostEqual(metrics['macro_f1_percent'], sum(f1s) / 4, places=6)
+
+    def test_never_predicted_class_has_undefined_precision(self):
+        matrix = torch.tensor([[5, 0, 0, 0], [0, 5, 0, 0], [3, 2, 0, 0], [0, 0, 0, 5]])
+        nuvasive = summarize(matrix)['per_class'][2]
+        self.assertEqual(nuvasive['recall_percent'], 0.0)
+        self.assertIsNone(nuvasive['precision_percent'])
+        self.assertIsNone(nuvasive['f1_percent'])
+
     def test_saved_split_rejects_overlap(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

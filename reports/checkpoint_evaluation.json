@@ -3,6 +3,8 @@
   "correct_pairs": 143,
   "accuracy_percent": 59.583333333333336,
   "balanced_accuracy_percent": 46.85606060606061,
+  "macro_precision_percent": 47.322502144705226,
+  "macro_f1_percent": 46.2531328320802,
   "class_order": [
     "Depuy expedium (Synthes)",
     "medtronic solera",
@@ -14,25 +16,37 @@
       "manufacturer": "Depuy expedium (Synthes)",
       "pairs": 40,
       "correct": 18,
-      "recall_percent": 45.0
+      "predicted": 58,
+      "recall_percent": 45.0,
+      "precision_percent": 31.03448275862069,
+      "f1_percent": 36.734693877551024
     },
     {
       "manufacturer": "medtronic solera",
       "pairs": 110,
       "correct": 98,
-      "recall_percent": 89.0909090909091
+      "predicted": 118,
+      "recall_percent": 89.0909090909091,
+      "precision_percent": 83.05084745762711,
+      "f1_percent": 85.96491228070175
     },
     {
       "manufacturer": "nuvasive reline",
       "pairs": 60,
       "correct": 22,
-      "recall_percent": 36.666666666666664
+      "predicted": 45,
+      "recall_percent": 36.666666666666664,
+      "precision_percent": 48.888888888888886,
+      "f1_percent": 41.9047619047619
     },
     {
       "manufacturer": "seaspine mariner",
       "pairs": 30,
       "correct": 5,
-      "recall_percent": 16.666666666666664
+      "predicted": 19,
+      "recall_percent": 16.666666666666664,
+      "precision_percent": 26.31578947368421,
+      "f1_percent": 20.40816326530612
     }
   ],
   "confusion_matrix_true_rows_predicted_columns": [
@@ -71,8 +85,10 @@
   "samples_per_patient": 10,
   "split_mode": "historical",
   "checkpoint_sha256": "73ddd94b7ec9bc55eead519e4b1f1680c1542357cbfcf24ed1a09494416ee4f5",
-  "metadata_sha256": "5966754d7ddb6e6faef2c254632a029e7775e3ab8e4c8442f47cfad9b3be4528",
+  "metadata_sha256": "45719780dcb7c8541a6715260fecb195830721b6dfd85b6c6d5c66ebc52df319",
   "torch_version": "2.9.1",
   "metric_description": "Crop-pair accuracy on a reconstructed or saved selection split; not an independent final test.",
-  "evaluated_on": "2026-11-18"
+  "evaluated_on": "2026-11-18",
+  "data_source": "Hugging Face dataset austin-carnahan/orthopedic-screw-images, revision d2af488859875b46bf5abf88f905b26069813597 (data/ folder)",
+  "note": "Regenerated on the Hugging Face copy of the data. Counts and confusion matrix are identical to the original handoff verification; this run adds precision/F1 and records the HF metadata hash."
 }
