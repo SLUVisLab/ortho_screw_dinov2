@@ -22,3 +22,6 @@ metadata*.csv
 *.jpeg
 *.dcm
 *.zip
+
+# huggingface_hub download metadata
+.cache/

@@ -13,20 +13,46 @@ from model import CLASSES, ROOT, load_checkpoint
 from train import prepare_data, collate_valid, seed_worker
 
 
+def _pct(x):
+    return 100 * x if x is not None else None
+
+
 def summarize(confusion):
+    """Metrics from a confusion matrix (rows = true class, columns = predicted class).
+
+    Per-class recall is the per-class accuracy. Precision is undefined (None) for a class
+    the model never predicts; F1 is 0 when precision and recall are both 0, and None when
+    either is undefined. Macro averages are taken over classes where the metric is defined.
+    """
     support = confusion.sum(1)
+    predicted = confusion.sum(0)
     correct = confusion.diag()
     recalls = [int(c) / int(n) if n else None for c, n in zip(correct, support)]
-    supported = [x for x in recalls if x is not None]
+    precisions = [int(c) / int(p) if p else None for c, p in zip(correct, predicted)]
+    f1s = []
+    for p, r in zip(precisions, recalls):
+        if p is None or r is None:
+            f1s.append(None)
+        else:
+            f1s.append(2 * p * r / (p + r) if p + r else 0.0)
+
+    def macro(values):
+        defined = [v for v in values if v is not None]
+        return 100 * sum(defined) / len(defined) if defined else None
+
     return {
         "valid_pairs": int(support.sum()),
         "correct_pairs": int(correct.sum()),
         "accuracy_percent": 100 * int(correct.sum()) / int(support.sum()),
-        "balanced_accuracy_percent": 100 * sum(supported) / len(supported),
+        "balanced_accuracy_percent": macro(recalls),
+        "macro_precision_percent": macro(precisions),
+        "macro_f1_percent": macro(f1s),
         "class_order": CLASSES,
-        "per_class": [{"manufacturer": name, "pairs": int(n), "correct": int(c),
-                       "recall_percent": 100 * recall if recall is not None else None}
-                      for name, n, c, recall in zip(CLASSES, support, correct, recalls)],
+        "per_class": [{"manufacturer": name, "pairs": int(n), "correct": int(c), "predicted": int(pr),
+                       "recall_percent": _pct(recall), "precision_percent": _pct(precision),
+                       "f1_percent": _pct(f1)}
+                      for name, n, c, pr, recall, precision, f1
+                      in zip(CLASSES, support, correct, predicted, recalls, precisions, f1s)],
         "confusion_matrix_true_rows_predicted_columns": confusion.tolist(),
     }
 
