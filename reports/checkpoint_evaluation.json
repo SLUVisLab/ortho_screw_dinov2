@@ -1,0 +1,78 @@
+{
+  "valid_pairs": 240,
+  "correct_pairs": 143,
+  "accuracy_percent": 59.583333333333336,
+  "balanced_accuracy_percent": 46.85606060606061,
+  "class_order": [
+    "Depuy expedium (Synthes)",
+    "medtronic solera",
+    "nuvasive reline",
+    "seaspine mariner"
+  ],
+  "per_class": [
+    {
+      "manufacturer": "Depuy expedium (Synthes)",
+      "pairs": 40,
+      "correct": 18,
+      "recall_percent": 45.0
+    },
+    {
+      "manufacturer": "medtronic solera",
+      "pairs": 110,
+      "correct": 98,
+      "recall_percent": 89.0909090909091
+    },
+    {
+      "manufacturer": "nuvasive reline",
+      "pairs": 60,
+      "correct": 22,
+      "recall_percent": 36.666666666666664
+    },
+    {
+      "manufacturer": "seaspine mariner",
+      "pairs": 30,
+      "correct": 5,
+      "recall_percent": 16.666666666666664
+    }
+  ],
+  "confusion_matrix_true_rows_predicted_columns": [
+    [
+      18,
+      6,
+      14,
+      2
+    ],
+    [
+      10,
+      98,
+      2,
+      0
+    ],
+    [
+      15,
+      11,
+      22,
+      12
+    ],
+    [
+      15,
+      3,
+      7,
+      5
+    ]
+  ],
+  "evaluation_patients": 26,
+  "nominal_pairs": 260,
+  "skipped_pairs": 20,
+  "seed": 42,
+  "workers": 4,
+  "batch_size": 32,
+  "device": "mps",
+  "samples_per_patient": 10,
+  "split_mode": "historical",
+  "checkpoint_sha256": "73ddd94b7ec9bc55eead519e4b1f1680c1542357cbfcf24ed1a09494416ee4f5",
+  "metadata_sha256": "5966754d7ddb6e6faef2c254632a029e7775e3ab8e4c8442f47cfad9b3be4528",
+  "torch_version": "2.9.1",
+  "metric_description": "Crop-pair accuracy on a reconstructed or saved selection split; not an independent final test.",
+  "evaluated_on": "2026-11-18"
+}

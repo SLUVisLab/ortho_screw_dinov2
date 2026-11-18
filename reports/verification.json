@@ -1,0 +1,15 @@
+{
+  "verified_on": "2026-11-18",
+  "python": "3.10.17",
+  "torch": "2.9.1",
+  "device": "mps",
+  "contract_tests_passed": 4,
+  "released_checkpoint_strict_load": true,
+  "released_checkpoint_evaluation_correct": 143,
+  "released_checkpoint_evaluation_valid_pairs": 240,
+  "one_epoch_training_cli_passed": true,
+  "trained_checkpoint_reloaded_and_evaluated_with_saved_split": true,
+  "backbone_unchanged_after_training": true,
+  "no_dataset_files_or_patient_ids_committed": true,
+  "full_50_epoch_training_rerun": false
+}

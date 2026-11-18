@@ -1,0 +1,16 @@
+{
+  "release": "handoff-v1",
+  "repository": "SLUVisLab/ortho_screw_dinov2",
+  "assets": [
+    {
+      "filename": "dinov2_dual_view.pth",
+      "bytes": 89875707,
+      "sha256": "73ddd94b7ec9bc55eead519e4b1f1680c1542357cbfcf24ed1a09494416ee4f5"
+    },
+    {
+      "filename": "dinov2_vits14_pretrain.pth",
+      "bytes": 88283115,
+      "sha256": "b938bf1bc15cd2ec0feacfe3a1bb553fe8ea9ca46a7e1d8d00217f29aef60cd9"
+    }
+  ]
+}
