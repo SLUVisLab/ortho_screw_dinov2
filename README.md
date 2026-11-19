@@ -28,6 +28,29 @@ How to read this:
 - Every class rests on few patients (roughly 3 to 11 evaluation patients each), and the 10 pairs per patient are correlated, so per-class numbers can move by tens of points with a different split.
 - For context, the previously deployed dual-view ResNet18, scored on the same 240 crop pairs, reached 49.6% accuracy, 48.4% balanced accuracy, and 49.4% macro-F1. DINOv2 is ahead on overall accuracy; on the class-balanced metrics the two are within a few points, with ResNet18 slightly ahead. They fail differently: ResNet18 never predicted NuVasive and labelled about half of all pairs SeaSpine, while DINOv2 predicts every class. See [`legacy/resnet18/`](legacy/resnet18/).
 
+## Methodology
+
+**Task.** Given two X-rays of the same patient, one anteroposterior (AP) and one lateral, predict which of four manufacturers made the patient's pedicle screws. Each patient has one manufacturer label, so the label applies to every screw in both views.
+
+**Data.** The [Hugging Face dataset](#data) has 526 X-ray images from 217 patients, with a binary screw mask for each image. Patients with no manufacturer label, and the Stryker Everest and Orthofix Firebird groups, are excluded. Then any manufacturer with fewer than 10 patients is dropped. What remains is 319 images from 130 patients in four classes: Medtronic Solera (71 patients), NuVasive Reline (28), DePuy Expedium (19), and SeaSpine Mariner (12). Only AP and lateral images are used. The classes are imbalanced, and the dataset is small.
+
+**Patient split.** Patients, not images, are split 80/20 into 104 training and 26 evaluation patients (`random_state=42`). All of a patient's images therefore land on one side of the split. The split is meant to be stratified by class, but the historical code misaligns the stratification labels. The evaluation patients are also used to pick the checkpoint, so there is no separate held-out test set. [Reproduction limits](#reproduction-limits) covers both points.
+
+**From X-ray to model input.** Whole radiographs are not fed to the model. For each sample, the loader:
+
+1. picks a random AP image and a random lateral image from the same patient;
+2. finds the screws in each image's mask (connected regions over 100 px in area) and picks one screw at random in each view, chosen independently, so the AP and lateral screws need not be the same physical screw;
+3. crops a square around that screw, twice its larger bounding-box side, with a ±5 px jitter of the center and edge-replicated padding at image borders;
+4. resizes the crop to 224×224 (training uses a random 224 crop of a 256 resize plus random horizontal and vertical flips), converts it to 3-channel grayscale, and applies ImageNet normalization.
+
+Because the image, the screw, and the jitter are all drawn at random, each epoch shows the model different crops of the same patients.
+
+**Model.** One DINOv2 ViT-S/14 backbone (about 22M parameters), pretrained by Meta with self-supervision on natural images, encodes both crops. The backbone is shared between the views and kept **frozen**; it is used as a fixed feature extractor. Its 384-dimension [CLS] embeddings for the AP and lateral crops are concatenated into one 768-dimension vector. A small head (`Linear 768→512 → ReLU → Dropout 0.5 → Linear 512→4`) maps that vector to four manufacturer scores. The head's roughly 400k parameters are the only part that is trained. The same 768-dimension vector is what the deployed Space uses to retrieve similar cases.
+
+**Training.** Each epoch draws one AP/lateral crop pair per training patient (104 pairs). Patients are sampled with replacement, with weights inversely proportional to their class's patient count, so the four manufacturers appear about equally often despite the imbalance. The head is trained with cross-entropy and Adam (learning rate 1e-4, weight decay 1e-4), batch size 16, for 50 epochs. `train.py` saves both the best-scoring checkpoint on the evaluation patients and the last one. The supplied checkpoint corresponds to the final epoch of the original run. The full recipe is in [Train a new model](#train-a-new-model).
+
+**Evaluation.** Each of the 26 evaluation patients contributes 10 random crop pairs, drawn with the deterministic resize-only transform and a fixed seed. That gives 260 pairs, of which 240 are valid; two patients have no usable AP/lateral pair. Each pair is classified independently. The reported metrics are crop-pair accuracy, balanced accuracy (the mean of per-class recall), per-class precision and F1, macro-F1, and the confusion matrix. Pairs from the same patient are correlated, so the effective sample size is closer to 26 patients than to 240 pairs.
+
 ## Get the code and weights
 
 ```bash
